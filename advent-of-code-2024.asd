@@ -1,0 +1,10 @@
+(defsystem "advent-of-code-2024"
+  :version "0.1.0"
+  :author ""
+  :license ""
+  :depends-on (:cl-ppcre :trivia :trivia.ppcre :arrow-macros :metabang-bind :neat-lambda)
+  :components ((:module "src"
+                :components
+                ((:file "main"))))
+  :description "")
+

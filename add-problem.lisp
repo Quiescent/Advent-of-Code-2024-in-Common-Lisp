@@ -23,7 +23,7 @@ SBCL, that's *posix-argv*, apparently."
         (format *error-output*
                 "Either year or day is not a number!~%Got ~a~%"
                 (cdr *posix-argv*)))
-      (with-open-file (file (asdf:system-relative-pathname :advent-of-code-practice-repo-2
+      (with-open-file (file (asdf:system-relative-pathname :advent-of-code-2024
                                                            (format nil
                                                                    "src/~a"
                                                                    file-name))
@@ -35,7 +35,7 @@ SBCL, that's *posix-argv*, apparently."
         (format file
                 "(in-package ~a)~%(neat-lambda:enable-lambda-syntax)~%(currying:enable-currying-syntax)~%~%"
                 package-name))
-      (with-open-file (file (asdf:system-relative-pathname :advent-of-code-practice-repo-2
+      (with-open-file (file (asdf:system-relative-pathname :advent-of-code-2024
                                                            (format nil
                                                                    "src/~a"
                                                                    input-file))

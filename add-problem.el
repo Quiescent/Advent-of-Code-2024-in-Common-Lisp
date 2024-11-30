@@ -6,7 +6,7 @@
 
 (defun main ()
   "Open the ASDF file in this directory and add the supplied problem file."
-  (find-file "advent-of-code-practice-repo-2.asd")
+  (find-file "advent-of-code-2024.asd")
   (search-forward "(:file \"main\")")
   (let ((begin (point))
         (indent-tabs-mode nil))
