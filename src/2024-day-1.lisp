@@ -10,8 +10,32 @@
     (labels ((recur ()
                (bind ((line (read-line f nil nil)))
                  (when line
-                   (cons line (recur))))))
-      (recur))))
+                   (cons (->> (split "   " line)
+                           (mapcar #'read-from-string))
+                         (recur))))))
+      (bind ((lists (recur)))
+        (cons (mapcar #'car lists)
+              (mapcar #'cadr lists))))))
 
 (defun part-1 ()
-  )
+  (bind (((xs . ys) (read-problem)))
+    (->> (map 'list
+              #'-
+              (sort xs #'<)
+              (sort ys #'<))
+      (mapcar #'abs)
+      (apply #'+))))
+
+(defun counts (xs)
+  (iter
+    (with c = (make-hash-table))
+    (for x in xs)
+    (incf (gethash x c 0))
+    (finally (return c))))
+
+(defun part-2 ()
+  (bind (((xs . ys) (read-problem))
+         (c (counts xs)))
+    (iter
+      (for y in ys)
+      (summing (* y (gethash y c 0))))))
