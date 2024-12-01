@@ -5,6 +5,7 @@
   :depends-on (:cl-ppcre :trivia :trivia.ppcre :arrow-macros :metabang-bind :neat-lambda)
   :components ((:module "src"
                 :components
-                ((:file "main"))))
+                ((:file "main")
+                 (:file "2024-day-1"))))
   :description "")
 
