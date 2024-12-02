@@ -18,7 +18,7 @@
 (defun advent-of-code-2024-reset-problem ()
   "Reset the day and year that I'm working on."
   (interactive)
-  (setq advent-of-code-2024-current-year nil
+  (setq advent-of-code-2024-current-year 2024
         advent-of-code-2024-current-day nil))
 
 (defun advent-of-code-2024-reset-session ()
