@@ -50,3 +50,26 @@
     (for line in (read-problem))
     (for nums = (map 'vector #'identity (read-from-string (format nil "(~a)" line))))
     (counting (is-good nums))))
+
+(defun is-safe (xs)
+  (iter
+    (for i from 0 below (length xs))
+    (for nums = (append (subseq xs 0 i)
+                        (subseq xs (1+ i))))
+    (thereis
+     (iter
+       (with direction = (> (- (car nums) (cadr nums)) 0))
+       (for x in nums)
+       (for y previous x)
+       (for is-good = (or (null y)
+                          (and (eq direction (> (- y x) 0))
+                               (<= 1 (abs (- y x)) 3))))
+       (always is-good)))))
+
+;; Original attempt, fixed.
+(defun part-2-alt ()
+  (iter
+    (for line in (mapcar #l(->> (format nil "(~a)" %1)
+                             read-from-string)
+                         (read-problem)))
+    (counting (is-safe line))))
