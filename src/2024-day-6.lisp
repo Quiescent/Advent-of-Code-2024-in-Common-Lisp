@@ -72,14 +72,6 @@
              (return t))
            (setf (gethash (cons direction coord) seen) t))))))
 
-(defun deep-copy-seq (xss)
-  (iter
-    (with new-seq = (copy-seq xss))
-    (for xs in-vector xss)
-    (for i from 0)
-    (setf (aref new-seq i) (copy-seq xs))
-    (finally (return new-seq))))
-
 (defun part-2 ()
   (bind ((grid      (read-problem))
          (coord     (find-start grid))
@@ -87,8 +79,10 @@
     (remhash coord positions)
     (iter
       (for (position _) in-hashtable positions)
-      (for tmp-grid = (deep-copy-seq grid))
-      (setf (aref (aref tmp-grid (imagpart position))
+      (setf (aref (aref grid (imagpart position))
                   (realpart position))
             #\#)
-      (counting (loops tmp-grid coord)))))
+      (counting (loops grid coord))
+      (setf (aref (aref grid (imagpart position))
+                  (realpart position))
+            #\.))))
