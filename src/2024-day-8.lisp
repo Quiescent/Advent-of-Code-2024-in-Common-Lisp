@@ -1,6 +1,7 @@
 (defpackage 2024-day-8
   (:use :cl :iterate :cl-ppcre :metabang-bind :trivia :trivia.ppcre)
-  (:shadowing-import-from :arrow-macros :->>))
+  (:shadowing-import-from :arrow-macros :->>)
+  (:shadowing-import-from :arrow-macros :->))
 (in-package 2024-day-8)
 (neat-lambda:enable-lambda-syntax)
 (currying:enable-currying-syntax)
@@ -11,7 +12,119 @@
                (bind ((line (read-line f nil nil)))
                  (when line
                    (cons line (recur))))))
-      (recur))))
+      (map 'vector #'identity (recur)))))
+
+(defun read-antennae (grid)
+  (iter
+    (with spots = (make-hash-table :test #'equal))
+    (for row in-vector grid)
+    (for y from 0)
+    (iter
+      (for x from 0)
+      (for char in-string row)
+      (when (not (char-equal char #\.))
+        (push (cons x y) (gethash char spots))))
+    (finally (return spots))))
+
+(defun all-antinodes (spots x-bound y-bound)
+  (labels ((in-bounds (x y)
+             (and (>= x 0)
+                  (< x x-bound)
+                  (>= y 0)
+                  (< y y-bound)))
+           (in-bound-nodes (coord-1 coord-2)
+             (bind (((x1 . y1) coord-1)
+                    ((x2 . y2) coord-2)
+                    (dx (abs (- x1 x2)))
+                    (dy (abs (- y1 y2)))
+                    (ax1 (- x1 dx))
+                    (ay1 (if (> y1 y2)
+                             (+ y1 dy)
+                             (- y1 dy)))
+                    (ax2 (+ x2 dx))
+                    (ay2 (if (> y2 y1)
+                             (+ y2 dy)
+                             (- y2 dy))))
+               (delete nil
+                       (list
+                        (when (in-bounds ax1 ay1)
+                          (cons ax1 ay1))
+                        (when (in-bounds ax2 ay2)
+                          (cons ax2 ay2))))))
+           (recur (acc xs)
+             (cond
+               ((null xs) acc)
+               ((= (length xs) 1) acc)
+               (t (recur (append acc
+                                 (iter
+                                   (for y in (cdr xs))
+                                   (appending (->> (sort (list (car xs) y)
+                                                         #'<
+                                                         :key #'car)
+                                                (apply #'in-bound-nodes)))))
+                         (cdr xs))))))
+    (recur nil spots)))
 
 (defun part-1 ()
-  )
+  (bind ((grid (read-problem))
+         (antennae (read-antennae grid))
+         (bound-x (length (aref grid 0)))
+         (bound-y (length grid)))
+    (-> (iter
+           (for (key spots) in-hashtable antennae)
+           (appending (all-antinodes spots bound-x bound-y)))
+      (delete-duplicates :test #'equal)
+      length)))
+
+(defun all-antinodes-advanced (spots x-bound y-bound)
+  (labels ((in-bounds (x y)
+             (and (>= x 0)
+                  (< x x-bound)
+                  (>= y 0)
+                  (< y y-bound)))
+           (iter-in-bounds-nodes (x-in y-in dx dy)
+             (append (iter
+                       (with y = y-in)
+                       (with x = x-in)
+                       (while (in-bounds x y))
+                       (collecting (cons x y))
+                       (incf x dx)
+                       (incf y dy))
+                     (iter
+                       (with y = y-in)
+                       (with x = x-in)
+                       (while (in-bounds x y))
+                       (collecting (cons x y))
+                       (decf x dx)
+                       (decf y dy))))
+           (in-bound-nodes (coord-1 coord-2)
+             (bind (((x1 . y1) coord-1)
+                    ((x2 . y2) coord-2)
+                    (dx (abs (- x1 x2)))
+                    (dy (abs (- y1 y2))))
+               (iter-in-bounds-nodes x1 y1 dx (if (> y1 y2) (- dy) dy))))
+           (recur (acc xs)
+             (cond
+               ((null xs) acc)
+               ((= (length xs) 1) acc)
+               (t (recur (append acc
+                                 (iter
+                                   (for y in (cdr xs))
+                                   (appending (->> (sort (list (car xs) y)
+                                                         #'<
+                                                         :key #'car)
+                                                (apply #'in-bound-nodes)))))
+                         (cdr xs))))))
+    (recur nil spots)))
+
+(defun part-2 ()
+  (bind ((grid (read-problem))
+         (antennae (read-antennae grid))
+         (bound-x (length (aref grid 0)))
+         (bound-y (length grid)))
+    (-> (iter
+           (for (key spots) in-hashtable antennae)
+           (appending (all-antinodes-advanced spots bound-x bound-y)))
+      (delete-duplicates :test #'equal)
+      length)))
+
