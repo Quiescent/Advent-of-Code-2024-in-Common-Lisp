@@ -39,29 +39,21 @@
       (iter
         (for i from 0 below 25)
         (setf stones (nreverse (transform-stones nil stones)))
-        (finally (return (length (print stones))))))))
+        (finally (return (length stones)))))))
 
 (defun part-2 ()
   (bind ((all-stones (mapcar #'read-from-string (split " " (car (read-problem)))))
          (results (make-hash-table :test #'equal)))
     (labels ((transform-stone (x i)
-               ;; (format t "x: ~a~%" x)
-               (cond
-                 ((>= i 6 ;25
-                      ) (progn ;; (print "done")
-                               (princ x) (princ " ")
-                                   1))
-                 ((= x 0) (or #1=(gethash (cons 0 i) results)
-                              (setf #1# (transform-stone 1 (1+ i)))))
-                 ((has-even-digits x)
-                  (bind (((:values a b) (number-halves x)))
-                    (or #2=(gethash (cons x i) results)
-                        (setf #2# (+ (or #3=(gethash (cons a i) results)
-                                         (setf #3# (transform-stone a (1+ i))))
-                                     (or #4=(gethash (cons b i) results)
-                                         (setf #4# (transform-stone b (1+ i)))))))))
-                 (t (or #2#
-                        (setf #2# (transform-stone (* x 2024) (1+ i))))))))
+               (or #1=(gethash (cons x i) results)
+                   (setf #1# (cond
+                               ((>= i 75) 1)
+                               ((= x 0) (transform-stone 1 (1+ i)))
+                               ((has-even-digits x)
+                                (bind (((:values a b) (number-halves x)))
+                                  (+ (transform-stone a (1+ i))
+                                     (transform-stone b (1+ i)))))
+                               (t (transform-stone (* x 2024) (1+ i))))))))
       (iter
         (for stone in all-stones)
         (summing (transform-stone stone 0))))))
