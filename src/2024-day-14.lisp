@@ -79,19 +79,30 @@
       (for y from 0 below y-bound)
       (iter
         (for x from 0 below x-bound)
-        (princ (if (aref grid y x) "#" ".")))
+        (princ (if (aref grid y x) "#" " ")))
       (fresh-line))))
 
 (defun part-2 ()
   (bind ((robots (read-problem))
          (x-bound 101)
-         (y-bound 103))
+         (y-bound 103)
+         (j 33)
+         (d 101))
     (iter
-      (for i from 0 below 100)
+      (for i from 0 below 10000)
       (iter
         (for robot in robots)
         (with-slots (vel pos) robot
           (incf pos vel)
           (setf pos (complex-mod pos x-bound y-bound))))
-      (format t "==========Iteration ~a==========" (1+ i))
-      (draw-robots robots x-bound y-bound))))
+      (when (= i (1- j))
+        (incf j d)
+        (format t "==========Iteration ~a==========" (1+ i))
+        (draw-robots robots x-bound y-bound)))))
+
+;; 33
+;; 134
+;; ...
+;; 538
+;; 740
+;; 841
