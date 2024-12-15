@@ -58,7 +58,6 @@
                (aref (aref grid (imagpart coord))
                      (realpart coord))))
       (iter
-        ;; (print-grid grid)
         (for instruction in-string instructions)
         (for d = (case instruction
                    (#\> #c(1 0))
@@ -75,11 +74,6 @@
           (push s-end ss)
           (incf end-c d)
           (setf s-end (grid-aref end-c)))
-        (format t "instruction: ~a~%" instruction)
-        (format t "c: ~a~%" c)
-        (format t "d: ~a~%" d)
-        (format t "(list end-c new-c): ~a~%" (list end-c new-c))
-        (format t "ss: ~a~%" ss)
         (when (and (or (/= end-c new-c)
                        (char-equal s #\.))
                    (not (char-equal s-end #\#)))
@@ -139,13 +133,11 @@
                            (realpart coord))
                      value))
              (collide-forward (m c1 d)
-               (format t "(list m c1 d): ~a~%" (list m c1 d))
                (or #1=(gethash c1 seen)
                    (bind ((new-c (+ c1 d))
                           (s     (grid-aref new-c))
                           (n-m   (grid-aref c1))
                           (vert  (= 1 (abs (imagpart d)))))
-                     (format t "(list new-c s n-m vert): ~a~%" (list new-c s n-m vert))
                      (setf #1# (case s
                                  (#\. (progn
                                         (grid-set new-c n-m)
@@ -169,7 +161,6 @@
                                                                       d))
                                                 (collide-forward n-m new-c d))
                                         (grid-set c1 m)))))))))
-      (print-grid grid)
       (iter
         (for instruction in-string instructions)
         (for d = (case instruction
@@ -177,7 +168,6 @@
                    (#\^ #c(0 -1))
                    (#\v #c(0 1))
                    (#\< #c(-1 0))))
-        (format t "(list instruction c d): ~a~%" (list instruction c d))
         (for new-c = (+ c d))
         (for s = (grid-aref new-c))
         (setf seen (make-hash-table :test #'equal))
@@ -194,14 +184,10 @@
              (setf collided seen)
              (setf seen (make-hash-table :test #'equal))
              (collide-forward #\. c d)
-             (format t "MOVED~%")
              (grid-set c #\.)
              (rotatef grid next-grid)
              (setf c new-c))))
-        (reset-next-grid)
-        ;; (print-grid grid)
-        )
-      (print-grid grid)
+        (reset-next-grid))
       (sum-box-gps grid))))
 
 ;; Too high: 1498392
