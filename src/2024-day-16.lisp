@@ -113,11 +113,49 @@
       (recur end)
       (hash-table-count seen))))
 
+(defun dfs-back (grid start end points)
+  (bind ((in-shortest (make-hash-table :test #'equal)))
+    (labels ((grid-aref (c)
+               (aref (aref grid (imagpart c))
+                     (realpart c)))
+             (consider (c dir rem xs)
+               (when (>= rem 0)
+                 (bind ((nc (+ dir c))
+                        (s (grid-aref nc)))
+                   (when (not (char-equal s #\#))
+                     (recur nc dir (1- rem) (cons c xs))))))
+             (recur (c dir rem xs)
+               ;; (format t "(list c dir rem): ~a~%" (list c dir rem))
+               (cond
+                 ((<= rem 0) nil)
+                 ((= start c) (iter
+                                (for x in (print xs))
+                                (setf (gethash x in-shortest) t)))
+                 (t
+                  (progn
+                    (consider c dir (- rem 1) xs)
+                    (consider c (* dir #c(0 1)) (- rem 1000) xs)
+                    (consider c (* dir #c(0 -1)) (- rem 1000) xs))))))
+      (recur end #c(-1 0) points nil)
+      (recur end #c(0 1) points nil)
+      ;; Excludes the start tile
+      (iter
+        (for (key val) in-hashtable in-shortest)
+        (setf (aref (aref grid (imagpart key))
+                    (realpart key))
+              #\O))
+      (fresh-line)
+      (iter
+        (for row in-vector grid)
+        (iter
+          (for c in-string row)
+          (princ c))
+        (fresh-line))
+      (1+ (hash-table-count in-shortest)))))
+
 (defun part-2 ()
   (bind ((grid (read-problem))
          (start (complex 1 (- (length (aref grid 0)) 2)))
-         (paths (best-path-2 grid start))
+         (points (best-path grid start))
          (end (complex (- (length (aref grid 0)) 2) 1)))
-    (format t "end: ~a~%" end)
-    (trace-back paths end)
-    paths))
+    (dfs-back grid start end points)))
