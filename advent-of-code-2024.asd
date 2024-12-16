@@ -6,6 +6,7 @@
   :components ((:module "src"
                 :components
                 ((:file "main")
+                 (:file "2024-day-17")
                  (:file "2024-day-16")
                  (:file "2024-day-15")
                  (:file "2024-day-14")
