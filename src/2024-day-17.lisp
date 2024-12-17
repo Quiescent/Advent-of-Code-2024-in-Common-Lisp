@@ -37,11 +37,10 @@
                  (0 (progn (setf a (floor a (expt 2 (combo op)))) (incf i 2)))
                  (1 (progn (setf b (logxor b op)) (incf i 2)))
                  (2 (progn (setf b (mod (combo op) 8)) (incf i 2)))
-                 (3 (if (/= a 0) (progn (setf i op)
-                                        (format t "(list a b c): ~a~%" (list a b c)))
-                        (incf i 2)))
+                 (3 (if (/= a 0) (setf i op) (incf i 2)))
                  (4 (progn (setf b (logxor b c)) (incf i 2)))
-                 (5 (progn (push (mod (combo op) 8) out) (incf i 2)))
+                 (5 (progn ;(format t "(list a b c): ~a~%" (list a b c))
+                           (push (mod (combo op) 8) out) (incf i 2)))
                  (6 (progn (setf b (floor a (expt 2 (combo op)))) (incf i 2)))
                  (7 (progn (setf c (floor a (expt 2 (combo op)))) (incf i 2))))))
       (iter
@@ -72,11 +71,31 @@
 
 (defun part-2 ()
   (bind ((input (read-problem))
-         (program (cdr input)))
-    (format t "~a~%" (run-program 2024 0 0 program))
+         (program (cdr input))
+         (e (* 3 (expt 8 (1- (print (length program)))))))
+
+    (format t "e: ~a~%" e)
+
+    (iter
+      (with cnt = 0)
+      (with j = 0)
+      (for i from (+ 281474976710656 (* 3 (floor (- 2251799813685248 281474976710656) 4))) below 2251799813685248)
+      (for res = (run-program i 0 0 program))
+      (finding i such-that (list-vec-equal res program))
+      (incf j)
+      (when (= j 100000)
+        (setf j 0)
+        (incf cnt)
+        (format t "cnt: ~a~%" cnt))
+      ;; (/ (- 129140163 43046721) 100000.0)
+      (format t "~a: ~a~%" i res)
+      )
+
+    (mod 3 8)
+    ;; 3849
+
     ;; (iter
-    ;;   (for i from 2000000 below 4000000)
-    ;;   (finding i such-that (list-vec-equal (run-program i 0 0 program) program))
-    ;;   (format t "~a~%" (run-program i 0 0 program))
-    ;;   )
+    ;;   (for i from 1 below (length program))
+    ;;   (format t "~a~%" (* 3 (expt 8 i))))
+    ;; (run-program (lcm 105553116266496 8) 0 0 program)
     ))
