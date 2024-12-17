@@ -21,9 +21,8 @@
                                            registers))))))
       (read-registers nil))))
 
-(defun run-program (registers program)
-  (bind (((a b c) registers)
-         (i 0)
+(defun run-program (a b c program)
+  (bind ((i 0)
          (bound (length program))
          (out nil))
     (labels ((combo (op)
@@ -38,7 +37,9 @@
                  (0 (progn (setf a (floor a (expt 2 (combo op)))) (incf i 2)))
                  (1 (progn (setf b (logxor b op)) (incf i 2)))
                  (2 (progn (setf b (mod (combo op) 8)) (incf i 2)))
-                 (3 (if (/= a 0) (setf i op) (incf i 2)))
+                 (3 (if (/= a 0) (progn (setf i op)
+                                        (format t "(list a b c): ~a~%" (list a b c)))
+                        (incf i 2)))
                  (4 (progn (setf b (logxor b c)) (incf i 2)))
                  (5 (progn (push (mod (combo op) 8) out) (incf i 2)))
                  (6 (progn (setf b (floor a (expt 2 (combo op)))) (incf i 2)))
@@ -52,7 +53,8 @@
 
 (defun part-1 ()
   (bind (((registers . program) (read-problem))
-         (out (run-program registers program)))
+         ((a b c) registers)
+         (out (run-program a b c program)))
     (iter
       (for j from 0)
       (for i in out)
@@ -60,7 +62,21 @@
       (when (/= j (1- (length out)))
        (princ ",")))))
 
+(defun list-vec-equal (xs ys)
+  (and
+   (= (length xs) (length ys))
+   (iter
+     (for x in xs)
+     (for y in-vector ys)
+     (always (= x y)))))
+
 (defun part-2 ()
-  (bind (((registers . program) (read-problem))
-         (out (run-program registers program)))
+  (bind ((input (read-problem))
+         (program (cdr input)))
+    (format t "~a~%" (run-program 2024 0 0 program))
+    ;; (iter
+    ;;   (for i from 2000000 below 4000000)
+    ;;   (finding i such-that (list-vec-equal (run-program i 0 0 program) program))
+    ;;   (format t "~a~%" (run-program i 0 0 program))
+    ;;   )
     ))
