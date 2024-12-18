@@ -69,7 +69,7 @@
      (for y in-vector ys)
      (always (= x y)))))
 
-(defun part-2 ()
+(defun part-2-check ()
   (bind ((input (read-problem))
          (program (cdr input)))
     (run-program 107413700225434 0 0 program)))
@@ -102,30 +102,20 @@
 
 (defun part-2-alt ()
   (bind ((input (read-problem))
-         (program (map 'list #'identity (cdr input)))
-         (x (->> (map 'string #'digit-char program)
-              read-from-string)))
+         (program (map 'list #'identity (cdr input))))
     (print-program (cdr input))
-    (format t "~%")
     (labels ((next-three (i acc digits)
-               (format t "(car digits): ~a~%" (car digits))
-               (format t "acc: ~b~%" acc)
                (cond
                  ((or (null digits) (> i 16)) acc)
                  (t (iter
                       (for b from 0 below 8)
-                      (format t "(list i b): ~a~%" (list i b))
                       (for pos = (logxor b 5))
-                      (format t "pos: ~a~%" pos)
-                      ;; It might be less than three digits ago...
                       (for c = (logand 7 (ash (logior (ash acc 3) b) (- pos))))
                       (for res = (->> pos
                                    (logxor 6)
                                    (logxor c)))
-                      ;; (format t "res: ~a~%" res)
                       (when (= (logand 7 res)
                                (car digits))
-                        (format t "(list i b): ~a~%" (list i b))
                         (thereis (next-three (1+ i)
                                              (logior (ash acc 3) b)
                                              (cdr digits)))))))))
