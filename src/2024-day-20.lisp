@@ -14,7 +14,6 @@
       (map 'vector #'identity (recur)))))
 
 (defun grid-distance (grid start end)
-  ;; (format t "(list start end): ~a~%" (list start end))
   (bind ((dists (make-hash-table :test #'equal))
          (seen (make-hash-table :test #'equal))
          (xs (queues:make-queue :simple-queue))
@@ -52,6 +51,7 @@
 
 (defun grid-race (grid start end)
   (bind ((dists (grid-distance grid start end))
+         (dists-from (all-points-shortest-distance-2 grid end))
          (init-dist (gethash end dists))
          (seen (make-hash-table :test #'equal))
          (xs (queues:make-queue :simple-queue))
@@ -89,9 +89,7 @@
                      (if (and (= (+ nx d d) end)
                               (= (+ dist 3) 64))
                          (in outer (collecting (cons nx (+ nx d d))))
-                         (when (>= (- init-dist (+ dist 3 (gethash end (grid-distance grid (+ nx d d) end)))) 100)
-                           ;; (format t "2 x, nx: ~a, ~a~%" x (+ nx d d))
-                           ;; (format t "n-dist: ~a~%" (+ dist 3 (gethash end (grid-distance grid (+ nx d d) end))))
+                         (when (>= (- init-dist (+ dist 3 (gethash (+ nx d d) dists-from))) 100)
                            (in outer (collecting (cons nx (+ nx d d)))))))
                     ((and (char-equal ns #\#)
                           (in-bounds (+ nx d))
@@ -99,34 +97,13 @@
                      (if (and (= (+ nx d) end)
                               (= (+ dist 2) 64))
                          (in outer (collecting (cons nx (+ nx d))))
-                         (when (>= (- init-dist (+ dist 2 (gethash end (grid-distance grid (+ nx d) end)))) 100)
-                           ;; (format t "1 x, nx: ~a, ~a~%" x (+ nx d))
-                           ;; (format t "dist: ~a~%" dist)
-                           ;; (format t "(gethash end (grid-distance grid (+ nx d) end)): ~a~%" (gethash end (grid-distance grid (+ nx d) end)))
-                           ;; (format t "n-dist: ~a~%" (+ dist 2 (gethash end (grid-distance grid (+ nx d) end))))
+                         (when (>= (- init-dist (+ dist 2 (gethash (+ nx d) dists-from))) 100)
                            (gethash end (grid-distance grid (+ nx d) end))
                            (in outer (collecting (cons nx (+ nx d)))))))
                     ((char-equal ns #\.)
                      (progn
                        (setf (gethash nx seen) t)
                        (queues:qpush xs nx))))))))))))
-
-(defun all-points-shortest-paths (grid end)
-  (bind ((shortest (make-hash-table :test #'equal))
-         (y-bound (length grid))
-         (x-bound (length (aref grid 0))))
-    (iter
-      (with i = 0)
-      (for y from 0 below y-bound)
-      (iter
-        (for x from 0 below x-bound)
-        (for start = (complex x y))
-        (when (not (char-equal (aref (aref grid y) x) #\#))
-          (format t "i: ~a~%" i)
-          (setf (gethash start shortest)
-                (gethash end (grid-distance grid start end)))
-          (incf i))))
-    shortest))
 
 (defun find-square (grid square)
   (iter outer
@@ -142,22 +119,52 @@
   (bind ((grid (read-problem))
          (start (find-square grid #\S))
          (end (find-square grid #\E)))
-    ;; (gethash end (grid-distance grid #c(3 3) end))
-    (remove-duplicates (grid-race grid start end) :test #'equal)
-    ))
+    (length (remove-duplicates (grid-race grid start end) :test #'equal))))
 
 ;; Correct: 1406
-
-;; wrong: 13718
 
 (defun manhattan (c1 c2)
   (bind ((res (- c1 c2)))
     (+ (abs (realpart res))
        (abs (imagpart res)))))
 
+(defun all-points-shortest-distance-2 (grid start)
+  (bind ((dists (make-hash-table :test #'equal))
+         (seen (make-hash-table :test #'equal))
+         (xs (queues:make-queue :simple-queue))
+         (directions (list #c(1 0) #c(-1 0) #c(0 1) #c(0 -1)))
+         (y-bound (length grid))
+         (x-bound (length (aref grid 0))))
+    (labels ((in-bounds (c)
+               (and (>= (realpart c) 0)
+                    (>= (imagpart c) 0)
+                    (< (realpart c) x-bound)
+                    (< (imagpart c) y-bound)))
+             (grid-get (c)
+               (aref (aref grid (imagpart c))
+                     (realpart c))))
+      (setf (gethash start dists) 0)
+      (setf (gethash start seen) t)
+      (queues:qpush xs start)
+      (iter outer
+        (for x = (queues:qpop xs))
+        (for dist = (gethash x dists))
+        (while x)
+        (iter
+          (for d in directions)
+          (for nx = (+ x d))
+          (when (and (in-bounds nx)
+                     (not #1=(gethash nx seen)))
+            (bind ((ns (grid-get nx)))
+              (when (not (char-equal ns #\#))
+                (setf #1# t)
+                (setf (gethash nx dists) (1+ dist))
+                (queues:qpush xs nx))))))
+      dists)))
+
 (defun grid-race-2 (grid start end)
   (bind ((dists (grid-distance grid start end))
-         (dists-from (all-points-shortest-paths grid end))
+         (dists-from (all-points-shortest-distance-2 grid end))
          (init-dist (gethash end dists))
          (seen (make-hash-table :test #'equal))
          (xs (queues:make-queue :simple-queue))
@@ -193,7 +200,6 @@
                       (next-iteration))
                     (for n-dist = (+ dist travel-time dist-from))
                     (when (>= (- init-dist n-dist) 100)
-                      ;; (format t "(list x coord): ~a: ~a~%" (list x coord) n-dist)
                       (in outer (collecting (cons x coord)))))
                   (when (char-equal ns #\.)
                     (progn
@@ -206,5 +212,4 @@
          (end (find-square grid #\E)))
     (length (remove-duplicates (grid-race-2 grid start end) :test #'equal))))
 
-;; wrong: 1685645 too high
 ;; Correct: 1006101
