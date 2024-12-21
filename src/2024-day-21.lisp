@@ -92,7 +92,48 @@
 (defun score-path (path)
   (if (= 0 (length path))
       0
-      (turns-in-path path)))
+      (turns-in-path path)
+      ;; (iter
+      ;;   (for b in path)
+      ;;   (for a previous b initially nil)
+      ;;   (when a
+      ;;     (summing (case a
+      ;;                (#\^
+      ;;                 (case b
+      ;;                   (#\^ 0)
+      ;;                   (#\> 2)
+      ;;                   (#\< 2)
+      ;;                   (#\v 1)
+      ;;                   (#\A 1)))
+      ;;                (#\v
+      ;;                 (case b
+      ;;                   (#\^ 1)
+      ;;                   (#\> 2)
+      ;;                   (#\< 2)
+      ;;                   (#\v 0)
+      ;;                   (#\A 2)))
+      ;;                (#\<
+      ;;                 (case b
+      ;;                   (#\^ 2)
+      ;;                   (#\> 2)
+      ;;                   (#\< 0)
+      ;;                   (#\v 1)
+      ;;                   (#\A 3)))
+      ;;                (#\>
+      ;;                 (case b
+      ;;                   (#\^ 2)
+      ;;                   (#\> 0)
+      ;;                   (#\< 2)
+      ;;                   (#\v 1)
+      ;;                   (#\A 1)))
+      ;;                (#\A
+      ;;                 (case b
+      ;;                   (#\^ 1)
+      ;;                   (#\> 1)
+      ;;                   (#\< 3)
+      ;;                   (#\v 2)
+      ;;                   (#\A 0)))))))
+      ))
 
 (defun shortest-keypad (code)
   (bind ((result-paths (list nil)))
@@ -216,7 +257,7 @@
     ;; (format t "(shortest code): ~a~%" (shortest code))
     
     (* (number-part code)
-       (shortest code))
+       (print (shortest code)))
     (print "tick")))
 
 (defun part-1 ()
@@ -231,7 +272,7 @@
          (res (mapcan #l(shortest-arrows %1 #\A) pad-sets))
          (m (reduce #'min (mapcar #'score-path res))))
     (iter
-      (for i from 0 below 1)
+      (for i from 0 below 3)
       (setf res (mapcan #l(shortest-arrows %1 #\A) res))
       (format t "(length res): ~a~%" (length res))
       (setf m (reduce #'min (mapcar #'score-path res)))
@@ -240,10 +281,40 @@
     (->> (mapcar #'length res)
       (reduce #'min))))
 
+(defun shortest-alt (code)
+  (bind ((pad-sets (shortest-keypad code))
+         (seen (make-hash-table :test #'equal)))
+    (labels ((recur (i sub-code)
+               ;; (format t "(list i sub-code): ~a~%" (list i (coerce sub-code 'string)))
+               (or #1=(gethash (cons i sub-code) seen)
+                   (setf #1# (if (= i 25)
+                                 (length sub-code)
+                                 (prog1
+                                     (iter
+                                       (for b in sub-code)
+                                       (for a previous b initially #\A)
+                                       (for paths = (ways-from-to-arrows a b))
+                                       (for scores = (mapcar #'score-path paths))
+                                       (for lowest = (apply #'min scores))
+                                       (for candidates = (iter
+                                                           (for path in paths)
+                                                           (for score in scores)
+                                                           (when (= score lowest)
+                                                             (collecting path))))
+                                       (summing
+                                        (iter
+                                          (for candidate in candidates)
+                                          (minimizing (recur (1+ i) (append candidate (list #\A)))))))
+                                   ;; (format t "done~%")
+                                   ))))))
+      (iter
+        (for pad-set in pad-sets)
+        (minimize (recur 0 pad-set))))))
+
 (defun complexity-2 (code)
   (prog1
     (* (number-part code)
-       (shortest-2 code))
+       (print (shortest-alt code)))
     (format t "tick~%")))
 
 (defun part-2 ()
